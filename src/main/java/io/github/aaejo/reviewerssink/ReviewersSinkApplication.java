@@ -9,5 +9,4 @@ public class ReviewersSinkApplication {
     public static void main(String[] args) {
         SpringApplication.run(ReviewersSinkApplication.class, args);
     }
-
 }
