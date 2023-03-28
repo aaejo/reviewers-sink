@@ -21,8 +21,7 @@ public class ReviewersDataListener {
 
     @KafkaHandler
     public void handle(Reviewer reviewer) {
+        log.debug(reviewer.toString());
         reviewerDatabaseAddition.parseValues(reviewer);
-        log.info(reviewer.toString());
-        
     }
 }
