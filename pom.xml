@@ -6,13 +6,13 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.0.2</version>
+		<version>3.0.5</version>
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
 
 	<groupId>io.github.aaejo</groupId>
 	<artifactId>reviewers-sink</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.0-beta</version>
 	<name>reviewers-sink</name>
 
 	<properties>
@@ -34,8 +34,8 @@
 	<dependencies>
 		<dependency>
 			<groupId>io.github.aaejo</groupId>
-			<artifactId>jds-common</artifactId>
-			<version>1.0.0</version>
+			<artifactId>jds-common-messaging</artifactId>
+			<version>1.0.1</version>
 		</dependency>
 
 		<dependency>
