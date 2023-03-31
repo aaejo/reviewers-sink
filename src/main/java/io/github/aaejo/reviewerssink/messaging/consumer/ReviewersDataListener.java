@@ -8,6 +8,10 @@ import io.github.aaejo.messaging.records.Reviewer;
 import io.github.aaejo.reviewerssink.ReviewerDatabaseAddition;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * @author Omri Harary
+ * @author Jeffery Kung
+ */
 @Slf4j
 @Component
 @KafkaListener(id = "reviewers-sink", topics = "reviewers-data")

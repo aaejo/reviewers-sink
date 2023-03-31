@@ -5,6 +5,9 @@ import org.springframework.stereotype.Service;
 
 import io.github.aaejo.messaging.records.Reviewer;
 
+/**
+ * @author Jeffery Kung
+ */
 @Service
 public class ReviewerDatabaseAddition {
     private final JdbcTemplate jdbcTemplate;
