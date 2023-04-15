@@ -56,7 +56,7 @@ public class ReviewerDatabaseAddition {
             if (split.length == 3) {
                 address1 = split[0];
                 city = split[1];
-                for (int i = split[2].length(); i > 0; i--) {
+                for (int i = split[2].length() - 1; i > 0; i--) {
                     if (Character.isLetter(split[2].charAt(i))) {
                         state = split[2].substring(0, i + 1);
                         postalCode = split[2].substring(i + 2);
@@ -65,7 +65,7 @@ public class ReviewerDatabaseAddition {
             } else if (split.length == 2) {
                 address1 = "";
                 city = split[0];
-                for (int i = split[1].length(); i > 0; i--) {
+                for (int i = split[1].length() - 1; i > 0; i--) {
                     if (Character.isLetter(split[1].charAt(i))) {
                         state = split[1].substring(0, i + 1);
                         postalCode = split[1].substring(i + 2);
