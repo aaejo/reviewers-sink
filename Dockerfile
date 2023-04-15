@@ -1,10 +1,10 @@
-FROM eclipse-temurin:17.0.6_10-jre-alpine AS unpacker
+FROM eclipse-temurin:17.0.6_10-jre AS unpacker
 WORKDIR /tmp
 ARG JAR_FILE=target/*.jar
 COPY ${JAR_FILE} app.jar
 RUN java -Djarmode=layertools -jar app.jar extract
 
-FROM eclipse-temurin:17.0.6_10-jre-alpine
+FROM eclipse-temurin:17.0.6_10-jre
 WORKDIR /opt/jds
 COPY --from=unpacker /tmp/dependencies/ ./
 COPY --from=unpacker /tmp/spring-boot-loader/ ./

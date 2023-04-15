@@ -12,7 +12,7 @@
 
 	<groupId>io.github.aaejo</groupId>
 	<artifactId>reviewers-sink</artifactId>
-	<version>1.0.1</version>
+	<version>1.1.0</version>
 	<name>reviewers-sink</name>
 
 	<properties>
@@ -38,6 +38,16 @@
 			<version>1.0.1</version>
 		</dependency>
 
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>3.12.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco</groupId>
+			<artifactId>libpostal-platform</artifactId>
+			<version>1.1-1.5.8</version>
+		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-jdbc</artifactId>

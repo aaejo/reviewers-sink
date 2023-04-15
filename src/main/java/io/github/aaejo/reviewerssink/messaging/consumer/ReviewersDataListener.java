@@ -2,6 +2,7 @@ package io.github.aaejo.reviewerssink.messaging.consumer;
 
 import org.springframework.kafka.annotation.KafkaHandler;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.listener.adapter.ConsumerRecordMetadata;
 import org.springframework.stereotype.Component;
 
 import io.github.aaejo.messaging.records.Reviewer;
@@ -24,7 +25,8 @@ public class ReviewersDataListener {
     }
 
     @KafkaHandler
-    public void handle(Reviewer reviewer) {
+    public void handle(Reviewer reviewer, ConsumerRecordMetadata metadata) {
+        log.info("Received reviewer #{} from {}", metadata.offset(), reviewer.institution().name());
         log.debug(reviewer.toString());
         reviewerDatabaseAddition.parseValues(reviewer);
     }

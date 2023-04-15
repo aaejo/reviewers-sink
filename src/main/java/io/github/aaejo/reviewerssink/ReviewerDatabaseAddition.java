@@ -1,19 +1,30 @@
 package io.github.aaejo.reviewerssink;
 
+import java.util.Arrays;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import io.github.aaejo.messaging.records.Reviewer;
+import io.github.aaejo.reviewerssink.address.Address;
+import io.github.aaejo.reviewerssink.address.AddressParser;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * @author Jeffery Kung
+ * @author Omri Harary
  */
+@Slf4j
 @Service
 public class ReviewerDatabaseAddition {
     private final JdbcTemplate jdbcTemplate;
+    private final AddressParser addressParser;
 
-    public ReviewerDatabaseAddition(JdbcTemplate jdbcTemplate) {
+    public ReviewerDatabaseAddition(JdbcTemplate jdbcTemplate, AddressParser addressParser) {
         this.jdbcTemplate = jdbcTemplate;
+        this.addressParser = addressParser;
     }
 
     public void parseValues(Reviewer reviewer) {
@@ -31,16 +42,25 @@ public class ReviewerDatabaseAddition {
         String primeEmail;
         String userID;
         String[] specializations;
-        fullName = reviewer.name();
+
+        if (StringUtils.startsWith(reviewer.name(), "Dr ")) {
+            fullName = StringUtils.removeStart(reviewer.name(), "Dr ");
+        } else if (StringUtils.startsWith(reviewer.name(), "Dr. ")) {
+            fullName = StringUtils.removeStart(reviewer.name(), "Dr. ");
+        } else if (StringUtils.startsWith(reviewer.name(), "Professor ")) {
+            fullName = StringUtils.removeStart(reviewer.name(), "Professor ");
+        } else {
+            fullName = reviewer.name();
+        }
         String[] name = fullName.split(" ");
         if (name.length == 2) {
             fName = name[0];
             lName = name[1];
             mName = "";
-        } else if (name.length == 3) {
+        } else if (name.length >= 3) {
             fName = name[0];
-            mName = name[1];
-            lName = name[2];
+            lName = name[name.length - 1];
+            mName = StringUtils.trimToEmpty(StringUtils.join(Arrays.copyOfRange(name, 1, name.length - 1), " "));
         } else {
             fName = "";
             mName = "";
@@ -50,59 +70,12 @@ public class ReviewerDatabaseAddition {
         salutation = reviewer.salutation();
         country = reviewer.institution().country();
 
-        String[] split = reviewer.institution().address().split(",");
+        Address address = addressParser.parse(reviewer.institution().address());
 
-        if (country.equals("USA")) {
-            if (split.length == 3) {
-                address1 = split[0];
-                city = split[1];
-                for (int i = split[2].length() - 1; i > 0; i--) {
-                    if (Character.isLetter(split[2].charAt(i))) {
-                        state = split[2].substring(0, i + 1);
-                        postalCode = split[2].substring(i + 2);
-                    }
-                }
-            } else if (split.length == 2) {
-                address1 = "";
-                city = split[0];
-                for (int i = split[1].length() - 1; i > 0; i--) {
-                    if (Character.isLetter(split[1].charAt(i))) {
-                        state = split[1].substring(0, i + 1);
-                        postalCode = split[1].substring(i + 2);
-                    }
-                }
-            }
-
-        } else if (country.equals("United Kingdom")) {
-            if (split.length == 4) {
-                address1 = split[0] + "," + split[1];
-                city = split[2].stripLeading();
-                state = "";
-                postalCode = split[3].stripLeading();
-            } else if (split.length == 3) {
-                address1 = split[0];
-                city = split[1].stripLeading();
-                state = "";
-                postalCode = split[2].stripLeading();
-            } else if (split.length == 2) {
-                address1 = "";
-                city = split[0];
-                state = "";
-                postalCode = split[1].stripLeading();
-            }
-        } else {
-            if (split.length == 4) {
-                address1 = split[0];
-                city = split[1].stripLeading();
-                state = split[2].stripLeading();
-                postalCode = split[3].stripLeading();
-            } else if (split.length == 3) {
-                address1 = "";
-                city = split[0];
-                state = split[1].stripLeading();
-                postalCode = split[2].stripLeading();
-            }
-        }
+        address1 = address.getDbFormatAddress();
+        city = address.city();
+        state = address.state();
+        postalCode = address.postcode();
 
         department = reviewer.department();
         institution = reviewer.institution().name();
@@ -111,9 +84,14 @@ public class ReviewerDatabaseAddition {
         specializations = reviewer.specializations();
 
         for (int i = 0; i < specializations.length; i++) {
-            jdbcTemplate.update("INSERT INTO scrapeddata VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
-                    salutation, fName, mName, lName, address1, address2, address3, city, state, postalCode, country,
-                    department, institution, primeEmail, userID, specializations[i]);
+            try {
+                jdbcTemplate.update("INSERT INTO scrapeddata VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+                        salutation, fName, mName, lName, address1, address2, address3, city, state, postalCode, country,
+                        department, institution, primeEmail, userID, specializations[i]);
+            } catch (DataAccessException e) {
+                // TODO: Improve this
+                log.error("DB insertion error.", e);
+            }
         }
     }
 }
