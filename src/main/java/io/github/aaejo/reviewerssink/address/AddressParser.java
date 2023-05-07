@@ -14,10 +14,10 @@ import org.bytedeco.libpostal.libpostal_address_parser_response_t;
 import org.bytedeco.libpostal.libpostal_data;
 import org.bytedeco.libpostal.libpostal_normalize_options_t;
 import org.bytedeco.libpostal.global.postal;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.UnsatisfiedDependencyException;
 import org.springframework.stereotype.Service;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Address parser service wrapping libpostal.
@@ -26,9 +26,9 @@ import lombok.extern.slf4j.Slf4j;
  * 
  * @author Omri Harary 
  */
-@Slf4j
 @Service
 public class AddressParser {
+    private static final Logger log = LoggerFactory.getLogger(AddressParser.class);
 
     private final libpostal_address_parser_options_t addressParserOptions;
     private final libpostal_normalize_options_t normalizeOptions;
@@ -62,6 +62,7 @@ public class AddressParser {
         postal.libpostal_teardown_language_classifier();
     }
 
+    @SuppressWarnings("rawtypes")
     public String[] expand(String addressString) {
         if (addressString == null) {
             throw new NullPointerException("Address string must not be null.");
@@ -102,6 +103,7 @@ public class AddressParser {
         }
     }
 
+    @SuppressWarnings("rawtypes")
     public String expandOne(String addressString) {
         if (addressString == null) {
             throw new NullPointerException("Address string must not be null.");

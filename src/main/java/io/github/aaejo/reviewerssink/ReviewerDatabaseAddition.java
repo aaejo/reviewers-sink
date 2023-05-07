@@ -1,24 +1,29 @@
 package io.github.aaejo.reviewerssink;
 
-import java.util.Arrays;
+import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
+import com.tupilabs.human_name_parser.HumanNameParserBuilder;
+import com.tupilabs.human_name_parser.HumanNameParserParser;
+
 import io.github.aaejo.messaging.records.Reviewer;
 import io.github.aaejo.reviewerssink.address.Address;
 import io.github.aaejo.reviewerssink.address.AddressParser;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * @author Jeffery Kung
  * @author Omri Harary
  */
-@Slf4j
 @Service
 public class ReviewerDatabaseAddition {
+    private static final Logger log = LoggerFactory.getLogger(ReviewerDatabaseAddition.class);
+
     private final JdbcTemplate jdbcTemplate;
     private final AddressParser addressParser;
 
@@ -28,7 +33,7 @@ public class ReviewerDatabaseAddition {
     }
 
     public void parseValues(Reviewer reviewer) {
-        String fName, mName, lName, fullName;
+        String fName, mName, lName;
         String salutation;
         String address1 = "";
         String address2 = "";
@@ -43,35 +48,41 @@ public class ReviewerDatabaseAddition {
         String userID;
         String[] specializations;
 
-        if (StringUtils.startsWith(reviewer.name(), "Dr ")) {
-            fullName = StringUtils.removeStart(reviewer.name(), "Dr ");
-        } else if (StringUtils.startsWith(reviewer.name(), "Dr. ")) {
-            fullName = StringUtils.removeStart(reviewer.name(), "Dr. ");
-        } else if (StringUtils.startsWith(reviewer.name(), "Professor ")) {
-            fullName = StringUtils.removeStart(reviewer.name(), "Professor ");
+        HumanNameParserParser nameParser = new HumanNameParserBuilder(reviewer.name())
+                .withExtraSalutations(List.of("professor"))
+                .build();
+
+        if (StringUtils.isNotBlank(nameParser.getSalutation())) {
+            salutation = nameParser.getSalutation();
         } else {
-            fullName = reviewer.name();
-        }
-        String[] name = fullName.split(" ");
-        if (name.length == 2) {
-            fName = name[0];
-            lName = name[1];
-            mName = "";
-        } else if (name.length >= 3) {
-            fName = name[0];
-            lName = name[name.length - 1];
-            mName = StringUtils.trimToEmpty(StringUtils.join(Arrays.copyOfRange(name, 1, name.length - 1), " "));
-        } else {
-            fName = "";
-            mName = "";
-            lName = "";
+            salutation = reviewer.salutation();
         }
 
-        salutation = reviewer.salutation();
+        if (StringUtils.isNotBlank(nameParser.getLeadingInit())) {
+            fName = nameParser.getLeadingInit() + " " + nameParser.getFirst();
+        } else {
+            fName = nameParser.getFirst();
+        }
+
+        if (StringUtils.isNotBlank(nameParser.getSuffix()) && StringUtils.isNotBlank(nameParser.getPostnominal())) {
+            lName = nameParser.getLast() + " " + nameParser.getSuffix() + " " + nameParser.getPostnominal();
+        } else if (StringUtils.isNotBlank(nameParser.getSuffix())) {
+            lName = nameParser.getLast() + " " + nameParser.getSuffix();
+        } else if (StringUtils.isNotBlank(nameParser.getPostnominal())) {
+            lName = nameParser.getLast() + " " + nameParser.getPostnominal();
+        } else {
+            lName = nameParser.getLast();
+        }
+
+        if (StringUtils.isNotBlank(nameParser.getNicknames())) {
+            mName = nameParser.getNicknames() + " " + nameParser.getMiddle();
+        } else {
+            mName = nameParser.getMiddle();
+        }
+
         country = reviewer.institution().country();
 
         Address address = addressParser.parse(reviewer.institution().address());
-
         address1 = address.getDbFormatAddress();
         city = address.city();
         state = address.state();
